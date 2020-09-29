@@ -4,26 +4,31 @@ import { useAntdTable } from 'site-mode'
 
 interface Props {}
 
-const Demo1 = () => {
-  const { tableOptions } = useAntdTable({ api: 'users' })
+const columns = [
+  {
+    title: '姓名',
+    dataIndex: 'name',
+  },
+  {
+    title: '性别',
+    dataIndex: 'gender',
+  },
+]
 
-  console.log(tableOptions)
+const Demo1 = () => {
+  const service = {
+    api: 'users',
+  }
+  const options = {
+    extraParams: {
+      int: 666,
+    },
+  }
+  const { tableOptions } = useAntdTable(service, options)
+
   return (
     <>
-      <Table
-        rowKey={'id'}
-        columns={[
-          {
-            title: '姓名',
-            dataIndex: 'name',
-          },
-          {
-            title: '性别',
-            dataIndex: 'gender',
-          },
-        ]}
-        {...tableOptions}
-      />
+      <Table rowKey={'_id'} columns={columns} {...tableOptions} />
     </>
   )
 }
