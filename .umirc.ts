@@ -1,12 +1,12 @@
 import { defineConfig } from 'dumi'
 
 export default defineConfig({
-  title: 'site-mode',
+  title: '婚礼纪Components',
   favicon: 'https://user-images.githubusercontent.com/9554297/83762004-a0761b00-a6a9-11ea-83b4-9c8ff721d4b8.png',
   logo: 'https://user-images.githubusercontent.com/9554297/83762004-a0761b00-a6a9-11ea-83b4-9c8ff721d4b8.png',
   outputPath: 'docs-dist',
   mode: 'site',
-  // more config: https://d.umijs.org/config
+  publicPath: './',
   extraBabelPlugins: [
     [
       'babel-plugin-import',
@@ -19,10 +19,13 @@ export default defineConfig({
     ],
   ],
   proxy: {
-    '/api': {
-      target: 'http://47.99.209.230/',
+    '/hlj': {
+      target: 'http://dev-api.hunliji.com/',
       changeOrigin: true,
-      pathRewrite: { '^/api': '' },
+      pathRewrite: { '^/hlj': '' },
     },
+  },
+  locale: {
+    antd: true,
   },
 })

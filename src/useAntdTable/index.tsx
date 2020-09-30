@@ -1,11 +1,11 @@
 import { TableProps } from 'antd/lib/table'
 import { useEffect, useState } from 'react'
 import isEqual from 'lodash/isEqual'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import { FormInstance } from 'antd/lib/form/Form'
 
 interface ReturnType<T> {
-  tableOptions?: TableProps<T>
-  search?: SearchType
+  tableOptions: TableProps<T>
+  search: SearchType
 }
 
 interface SearchType {
@@ -25,13 +25,10 @@ interface OptionsType {
   extraParams?: {
     [key: string]: any
   }
-  form?: WrappedFormUtils
+  form?: FormInstance
 }
 
-const useTable = <T extends {}>(
-  service: ServiceType,
-  defaultOptions?: OptionsType
-): ReturnType<T> => {
+const useTable = <T extends {}>(service: ServiceType, defaultOptions?: OptionsType): ReturnType<T> => {
   const pageKey = defaultOptions?.pageKey || 'page'
   const pageSizeKey = defaultOptions?.pageSizeKey || 'pageSize'
   const form = defaultOptions?.form
@@ -44,23 +41,23 @@ const useTable = <T extends {}>(
 
   useEffect(() => {
     _queryList()
-  }, [page, pageSize, searchParams])
+  }, [])
 
   const _onChange = (e: any) => {
-    !isEqual(page, e.current) && setPage(e.current)
-    !isEqual(pageSize, e.pageSize) && setPageSize(e.pageSize)
+    !isEqual(page, e.current) && _queryList(e.current)
+    !isEqual(pageSize, e.pageSize) && _queryList(1, searchParams, e.pageSize)
   }
 
-  const _queryList = async () => {
+  const _queryList = async (p: number = page, params: object = searchParams, psize: number = pageSize) => {
     setLoading(true)
     const { success, data } = await _getApi()({
-      [pageKey]: page,
-      [pageSizeKey]: pageSize,
+      [pageKey]: p || page,
+      [pageSizeKey]: psize || pageSize,
       ...defaultOptions?.extraParams,
-      ...searchParams
+      ...(params || searchParams),
     })
     if (success) {
-      _queryAfter(data)
+      _queryAfter(data, { p, psize, params })
     }
   }
 
@@ -68,12 +65,15 @@ const useTable = <T extends {}>(
     return service.api
   }
 
-  const _queryAfter = (data: any) => {
+  const _queryAfter = (data: any, { p, psize, params }) => {
     const list = data.list || []
     const total = data.totalCount
     setList(list)
     setTotal(total)
     setLoading(false)
+    setPage(p)
+    setPageSize(psize)
+    setSearchParams(params)
   }
 
   const _onReset = () => {
@@ -81,17 +81,21 @@ const useTable = <T extends {}>(
       return
     }
     form.resetFields()
-    setSearchParams({})
+    _queryList(1, {})
   }
 
-  const _onSubmit = () => {
+  const _onSubmit = async () => {
     if (!form) {
       return
     }
-    setTimeout(() => {
-      const values = form.getFieldsValue()
-      setSearchParams(values)
-    })
+    await _validateFormStatus(form)
+    const values = form.getFieldsValue()
+    _queryList(1, values)
+  }
+
+  const _validateFormStatus = async form => {
+    const result = await form.validateFields()
+    return result
   }
 
   return {
@@ -104,14 +108,14 @@ const useTable = <T extends {}>(
         current: page,
         total: total,
         showQuickJumper: true,
-        showTotal: (total) => `共 ${total} 条`
+        showTotal: total => `共 ${total} 条`,
       },
-      dataSource: list
+      dataSource: list,
     },
     search: {
       reset: _onReset,
-      submit: _onSubmit
-    }
+      submit: _onSubmit,
+    },
   }
 }
 
